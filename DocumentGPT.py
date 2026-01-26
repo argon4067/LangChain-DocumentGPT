@@ -4,66 +4,39 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-print(f'✅ {os.path.basename( __file__ )} 실행됨 {time.strftime('%Y-%m-%d %H:%M:%S')}')  # 실행파일명, 현재시간출력
 print(f'\tOPENAI_API_KEY={os.getenv("OPENAI_API_KEY")[:20]}...') # OPENAI_API_KEY 필요!
 #─────────────────────────────────────────────────────────────────────────────────────────
 import streamlit as st
-
 from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain_openai.chat_models.base import ChatOpenAI
 from langchain_core.runnables.base import RunnableLambda
 from langchain_core.runnables.passthrough import RunnablePassthrough
 from langchain_community.document_loaders.unstructured import UnstructuredFileLoader
-
-from langchain_classic.embeddings import CacheBackedEmbeddings  # ✅
-
+from langchain_classic.embeddings import CacheBackedEmbeddings
 from langchain_openai.embeddings.base import OpenAIEmbeddings
-from langchain_classic.storage import LocalFileStore  # ✅
+from langchain_classic.storage import LocalFileStore
 from langchain_text_splitters.character import CharacterTextSplitter
 from langchain_community.vectorstores.faiss import FAISS
-
-# LangChain 의 context 안에 있는 callback handler 는
-# 기본적으로 LLM 의 event 를 listen 하는 class 다. 가령.
-# ex) LLM 이 무언가를 만들기 시작할때,  작업을 끝낼 때,  LLM 이 글자를 생성하거나,  
-#     streaming 할때, LLM 에 에러가 발생할때.. 등등
-# callback handler 를 사용하여 log 를 작성하거나 analytics 등으로 보내는 등의 유용한 동작을 구현해볼수 있다.
 from langchain_core.callbacks.base import BaseCallbackHandler
 
 # ────────────────────────────────────────
 # 🎃 LLM 로직
 # ────────────────────────────────────────
-
 class ChatCallbackHandler(BaseCallbackHandler):
-    # CallbackHandler 는 event 들을 listen 하는 여러 함수들이 있다.
-    # on_xxx() 으로 시작하는 함수들을 오버라이딩 하여 구현한다
-    #    ex) LLM 상에서 발생한 event 를 다루는 함수들
-    #       chain, retriever, 혹은 agent 에 대한 함수들도 있다.
-    #    이벤트핸들러 함수 참조: https://python.langchain.com/api_reference/core/callbacks/langchain_core.callbacks.base.BaseCallbackHandler.html#langchain_core.callbacks.base.BaseCallbackHandler
-
+    
     # ↓ on_llm_start() : LLM 작업 시작할때 호출
-    #   많은 argument 들이 있지만 이번예제에선 걍 *args, **kwargs 로 받아낸다.  
     def on_llm_start(self, *args, **kwargs):
-        self.message = ""  # token 들이 채워질 문자열 준비
-
-        # token 텍스트 들로 채워나갈 메세지 박스
+        self.message = ""
         self.message_box = st.empty()
-
 
     # ↓ on_llm_end() : LLM 작업 종료할때 호출
     def on_llm_end(self, *args, **kwargs):
-        # LLM 답변이 끝나면 message 저장
         save_message(self.message, 'ai')
 
-       
     # ↓ on_llm_new_token() : LLM이 생성해내는 새로운 token 마다 호출
     def on_llm_new_token(self, token, *args, **kwargs):
-        self.message += token # 세로운 token 들로 message 에 추가.
-        self.message_box.markdown(self.message) # empty 에 markdown 작성.
-
-        
-
-
-
+        self.message += token 
+        self.message_box.markdown(self.message)
 
 llm = ChatOpenAI(
     temperature=0.1,
@@ -85,12 +58,10 @@ prompt = ChatPromptTemplate.from_messages([
 def format_docs(docs):
     return "\n\n".join(document.page_content for document in docs)
 
-
 # ────────────────────────────────────────
 # 🍇 file load & cache
 # ────────────────────────────────────────
 
-# 업로드할 파일, 임베딩 벡터를 저장할 경로. 미리 생성해두기
 upload_dir = r'./.cache/files'
 embedding_dir = r'./.cache/embeddings'
 if not os.path.exists(upload_dir):
@@ -98,11 +69,10 @@ if not os.path.exists(upload_dir):
 if not os.path.exists(embedding_dir):
     os.makedirs(embedding_dir)
 
-
 @st.cache_resource(show_spinner="Embedding file...")
 def embed_file(file):
     file_content = file.read()
-    file_path = os.path.join(upload_dir, file.name) # 업로드할 파일이 저장될 경로
+    file_path = os.path.join(upload_dir, file.name)
 
     with open(file_path, "wb") as f:
         f.write(file_content)
@@ -123,7 +93,6 @@ def embed_file(file):
 
     retrivever = vectorstore.as_retriever()
     return retrivever
-
 
 # ────────────────────────────────────────
 # ⭕ Streamlit 로직
@@ -146,12 +115,8 @@ with st.sidebar:
         type=['pdf', 'txt', 'docx']
     )
 
-# message 저장 함수
 def save_message(message, role):
     st.session_state['messages'].append({'message': message, 'role': role})
-
-
-
 
 def send_message(message, role, save=True):
     with st.chat_message(role):
@@ -191,9 +156,10 @@ if file:
 
 
 else:
-    st.session_state['messages'] = []  # file 이 없거나 삭제되면 초기화.
+    st.session_state['messages'] = []
 
 
     
 
     
+
