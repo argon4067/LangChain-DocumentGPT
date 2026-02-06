@@ -52,13 +52,97 @@ Retrieval-Augmented Generation
   
 ----
 
-#
+# LLM 연결 코드
+```python
+llm = ChatOpenAI(
+    model="gpt-4o",
+    temperature=0.1,
+    streaming=True,
+    callbacks=[ChatCallbackHandler()],
+)
+```
+
+---
+
+# 임베딩
+```python
+@st.cache_resource(show_spinner="Embedding file...")
+def embed_file(file_bytes: bytes, file_name: str, file_hash: str):
+
+    safe_file_name = f"{file_hash}__{file_name}"
+    file_path = os.path.join(upload_dir, safe_file_name)
+
+    with open(file_path, "wb") as f:
+        f.write(file_bytes)
+
+    splitter = CharacterTextSplitter.from_tiktoken_encoder(
+        separator='\n',
+        chunk_size=600,
+        chunk_overlap=100,
+    )
+    loader = UnstructuredFileLoader(file_path)
+    docs = loader.load_and_split(text_splitter=splitter)
+
+    cache_dir = LocalFileStore(os.path.join(embedding_dir, file_hash))
+    embeddings = OpenAIEmbeddings()
+    cached_embeddings = CacheBackedEmbeddings.from_bytes_store(embeddings, cache_dir)
+
+    vectorstore = FAISS.from_documents(docs, cached_embeddings)
+    retriever = vectorstore.as_retriever()
+    return retriever
+```
+
+---
+# DocumentGPT 구성
+  - 웹 API : Streamlit
+  - LLM : ChatOpenAI() - gpt-4o 모델
+  - Embedding Model : OpenAIEmbeddings()
+  - PDT, TXT, DOCX만 파일 업로드 지원
+  - 문서 청크사이즈 : 600, overlap : 100
+  - 벡터저장소 : FAISS
+
+---
+
+# Review
+초기화면
+<img width="2560" height="1528" alt="image" src="https://github.com/user-attachments/assets/c790c4ab-5630-4137-94de-91d1ebdc054f" />
+
+파일 삽입 후 임베딩 로딩
+<img width="2560" height="1528" alt="image" src="https://github.com/user-attachments/assets/4f5e93a5-01b5-490a-8144-df18b8ebafd3" />
+
+임베딩 완료 후
+<img width="2560" height="1528" alt="image" src="https://github.com/user-attachments/assets/36631c74-f2e4-4799-be5b-63f774adbc36" />
+이때 @st.cache_resource(show_spinner="Embedding file...") 를 사용하여
+같은 파일의 경우 다시 임베딩 하지 않기 위해 cache 에 저장한다.
+
+질문
+<img width="2560" height="1528" alt="image" src="https://github.com/user-attachments/assets/a1792c2c-c7b0-4ae4-9d1d-c8ddda0ece90" />
+
+```python
+prompt = ChatPromptTemplate.from_messages([
+    ('system', """
+            Answer the question using ONLY the following context and chat history.
+            If you don't know the answer just say you don't know. DON'T make anything up.
+
+            Context: {context}
+    """),
+
+    MessagesPlaceholder(variable_name='history'),
+
+    ('human', "{question}"),
+])
+```
+prompt 를 활용하여
+ - context의 내용이 있는 경우 : context를 바탕으로
+ - context의 내용이 없는 경우 : chat_histoy를 바탕으로
+ - 위 상황에 둘 다 해당하지 않는 경우 : 추론하지 않고 모른다 라고 답한다.
+ - 평문의 경우 : 평범한 챗봇
+
+이러한 로직으로 작동합니다.
 
 
 
 
-
-
-
+---
 # Reference
 https://github.com/tetrapod0/RAG_with_lm_studio
