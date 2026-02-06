@@ -1,78 +1,58 @@
 # LangChain-DocumentGPT
-LangChain 으로 챗봇 만들기
+LangChain, LangGraph 으로 문서 챗봇 만들기
+
+----
+
+# LangChain
+<img width="565" height="222" alt="image" src="https://github.com/user-attachments/assets/cb08b293-9ab2-4cc5-a061-a2ff495df47b" />
+
+  - 대규모 언어모델(LLM)을 더 효율적이고 유연하게 활용할 수 있도록 설계된 프레임워크 입니다.
+  - 특히 chain이라는 개념을 중심으로 작동하여 LLM을 호출하는 과정을 여러 단계로 구성하여 복잡한 작업을 수행할 수 있습니다.
+  - 이를 통해 대화형 AI, 검색 시스템, 데이터 분석, 작업 자동화 등 다양한 어플리케이션을 쉽게 개발할 수 있습니다. 
+
+## LangChain의 주요 목적
+  1. LLM과 외부 데이터 통합: 외부 데이터를 언어모델과 연결하여 더 스마트한 작업을 수행할 수 있습니다.
+
+  2. 멀티스텝 작업: 여러 단계를 체인처럼 연결하여 복잡한 로직을 처리할 수 있습니다.
+
+  3. 메모리 기능: 대화형 애플리케이션에서 문맥을 유지하도록 설계된 메모리 기능을 제공합니다.
+
+  4. 모듈화: 다양한 모듈을 제공하여 필요에 따라 조합하거나 확장 가능하도록 설계되었습니다.
 
 # RAG
-## Retrieval Augmented Generation (검색증강생성)
+Retrieval-Augmented Generation
+ - 자연어 처리 및 생성에서 지식 기반을 활용하여 LLM이 더 정확하고 맥락에 맞는 응답을 생성하는 기법입니다.
 
-- RAG 는 특정 라이브러리나 프레임워크 이름이 아니라
-대규모 언어 모델(LLM)이 답변을 생성하기 전, 외부 지식 베이스(데이터베이스)에서 관련 정보를 검색하여 활용하는 기술
+## RAG 의 2단계
 
-- LLM(대형 언어 모델)의 알려진 문제점
-  - 답이 없을때 허위 정보 제공
-  - 사용자가 구체적이고 최신의 응답을 기대할 때 out-of-date나 일반적인 정보 제공
-  - 신뢰할 수 없는 출처로부터 응답 생성
-등 의 문제를 해결하기 위한 접근 방식
-
-- RAG 를 수행하는 방법은 다양해서, 어떤 방식으로 RAG 를 구현할지는 Domain에 따라 결정해야 한다.
-
-# RAG의 기본 구조
-## 1. Retrieval(추출)
-사용자의 질문이나 컨텍스트를 입력으로 받아서, 이와 관련된 외부 데이터를 검색하는 단계
-    <img width="1653" height="580" alt="image" src="https://github.com/user-attachments/assets/a936dac6-863d-4b3d-b76d-9ee33b50b2e3" />
-    
-  - RAG 의 첫번째 단계인 Retrieval 의 일반적인 과정
-    1. data source 에서 데이터 load
-    2. 데이터는 split 하면서 transform
-    3. transform 한 데이터를 embed.
-    4. embed 된 데이터를 store 에 저장.
-    5. 검색(질의) 가 입력되면 store 에서 관련 문서들을 retrieve!
-
-## 2. Augmented Generation
-   - 검색된 데이터를 기반으로 LLM 모델이 사용자의 질문에 답변을 생성하는 단계
+1. Retrieval(검색 증강)
+  - 먼저 질문이나 요청에 관련된 정보를 외부 지식 기반에서 검색합니다.
+  - 이를 통해 **사전 학습**된 언어 모델이 가지고 있는 지식에 의존하지 않고도 최신 정보나 특정 도메인의 데이터를 활용할 수 있습니다.
   
-# RAG의 기법
-
-## 1. Stuff Document Chain
-  <img width="2140" height="1164" alt="image" src="https://github.com/user-attachments/assets/f77df65d-d444-402c-84a0-9b11ddd936b1" />
-  
-  여러개의 문서(Document)를 하나로 합쳐서 (stuffing) 프롬프트에 넣어 LLM 에 전달하는 기법
-  
-  - 장점 
-    - 문서의 양이 LLM 의 Context window 보다 작다면 매우 빠르고 효율적.
-  
-  - 단점
-    - 길이 제한 문졔: AI 모델은 입력 길이에 제한이 있음. 너무 긴 문서를 처리하려고 하면 잘리거나 오류가 발생할 수 있음
-    - 정보 손실 문제: 모델이 너무 많은 정보를 한꺼번에 처리하려다보니 중요한 내용을 놓칠 수 있음
-
-## 2. Map-Reduce chain
-  <img width="2272" height="702" alt="image" src="https://github.com/user-attachments/assets/b8010626-14e6-41f3-98ab-a11e73711806" />
-
-  질문에 대한 관련 문서 각각을 처리(Map)하고, 결과를 결합해 최종 출력을 생성(Reduce)하는 방법
-
-  - 장점
-    - 긴 문서에 적합: 각각의 문서를 요약하므로 검색한 문서가 많거나 길 때 유용
-    - 정보 보전: 각각의 문서를 독립적으로 처리하므로 정보 보존에 유리
-
- - 단점
-    - 비용: 문서별로 처리하고 최종적으로 출력을 수행하는 과정에서 AI 모델을 계속 사용해야하므로 토큰 사용이 많아질 수 있어서 비용이 증가
-    - 속도: 처리해야하는 과정이 많아지기 때문에 Stuff에 비해 상대적으로 느림
-  
-
-## 3. Map-Rerank chain
-   <img width="1404" height="494" alt="image" src="https://github.com/user-attachments/assets/a748832e-b744-4e65-a082-6a15e4453008" />
+2. Augmented Generation(생성 증강)
    
-   Map-rerank 흐름
-   
-    1. Map 단계
-       각 Document 를 독립적으로 LLM 에 전달
-       답변 + 관련성 점수 생성.
-    
-    2. Rerank 단계
-        점수를 기준으로 가장 좋은 답변 선택.
-   
+- 검색된 정보를 언어 모델을 통해 응답 생성에 활용합니다.
+- 이 과정에서 검색된 정보가 언어 모델에 추가적인 context를 제공하여, 더 신뢰할 수 있고 구체적인 답변을 생성 할 수 있게 합니다.
 
+## RAG 의 장점
+ 1. 정확성 향상: 모델이 기억 기반이 아니라 검색된 최신 정보를 사용하여 답함으로써, 더 신뢰할 수 있는 결과를 제공합니다.
+ 2. 도메인 특화: 특정 도메인에 최적화된 데이터를 검색하고 이를 활용할 수 있습니다.
+ 3. 대규모 데이터 활용: 사전에 학습된 모델의 제한된 지식이 아니라 대규모 외부 데이터를 동적으로 활용할 수 있습니다.
 
-## 4. Refine Document chain
+## langChain 에서 LAG 구현
+
+1. 문서 처리 및 임베딩
+    - 문서를 벡터화하여 벡터 데이터베이스에 저장합니다.
+     
+2. 질의와 관련된 문서 검색
+    - 사용자의 질문을 벡터화한 후, 벡터 데이터베이스에서 관련 문서를 검색합니다.
+   
+3. LLM을 통한 응답 생성
+    - 검색된 문서를 context로 추가하여 GPT와 같은 언어 모델이 자연어 응답을 생성합니다.
+  
+----
+
+#
 
 
 
@@ -82,5 +62,3 @@ LangChain 으로 챗봇 만들기
 
 # Reference
 https://github.com/tetrapod0/RAG_with_lm_studio
-https://aws.amazon.com/what-is/retrieval-augmented-generation/
-https://velog.io/@pysun/LangChain-RAG-%EA%B8%B0%EB%B2%95-Stuff
